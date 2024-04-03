@@ -1,3 +1,5 @@
+use rayon::prelude::*;
+
 use std::path::Path;
 
 use std::fmt;
@@ -6,7 +8,6 @@ use image::codecs::gif::GifDecoder;
 use image::{AnimationDecoder, DynamicImage, Frame, ImageFormat};
 use std::fs::File;
 use std::io::BufReader;
-
 
 use clap::Parser;
 
@@ -58,11 +59,8 @@ fn main() {
     // Decode a gif into frames
     let frames = read_into_frames(gif_path);
 
-    let mut frame_count = 0;
-
-    frames.iter().for_each(|frame|{
-        save_frame(frame.to_owned(), frame_count, output_type.to_owned());
-        frame_count += 1;
+    frames.par_iter().enumerate().for_each(|(index, frame)|{
+        save_frame(frame.to_owned(), index, output_type.to_owned());
     })
 }
 
@@ -75,7 +73,7 @@ fn read_into_frames(path: &Path) -> Vec<Frame> {
     frames.collect_frames().expect("Error decoding gif")
 }
 
-fn save_frame(frame: Frame, frame_count: i32, output_type: OutputType) {
+fn save_frame(frame: Frame, frame_count: usize, output_type: OutputType) {
     let img_buffer = frame.into_buffer();
     let img_buffer = DynamicImage::ImageRgba8(img_buffer);
     let path = format!("frame_{}.{}", frame_count, output_type);
