@@ -1,12 +1,27 @@
 # split-gif
 
-Save frames of a GIF
+Split a GIF file into frames and save them as images. Allows different file type ouputs, currently jpg and png.
 
 ## Usage
 
+Clone and run with cargo:
 ```
-Split a GIF file into frames and save them as images. Allows different file type ouputs
+cargo run --release -- -i my/gif/path.gif -o png
+```
 
+Or you can compile the executable to `/target/release/split-gif` with:
+```
+cargo build --release
+# if you want
+cp ./target/release/split-gif /usr/local/bin/split-gif
+# then just
+split-gif -i example.gif -o jpg
+```
+
+
+# Help
+
+```
 Usage: split-gif --input-path <INPUT_PATH> --output-type <OUTPUT_TYPE>
 
 Options:
@@ -24,7 +39,3 @@ Options:
   -V, --version
           Print version
 ```
-
-## Supported output formats
-- JPEG
-- PNG
