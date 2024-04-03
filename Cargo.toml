@@ -10,3 +10,4 @@ description = "Save frames of a GIF"
 [dependencies]
 clap = { version = "4.5.4", features = ["derive"] }
 image = "0.25.1"
+rayon = "1.10.0"
