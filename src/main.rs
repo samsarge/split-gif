@@ -1,22 +1,38 @@
-use core::panic;
-
 use std::path::Path;
 
+use std::fmt;
 use image::codecs::gif::GifDecoder;
 
-use image::{Frame, AnimationDecoder, ImageFormat, DynamicImage};
+use image::{AnimationDecoder, DynamicImage, Frame, ImageFormat};
 use std::fs::File;
 use std::io::BufReader;
 
 
 use clap::Parser;
 
-#[derive(clap::ValueEnum, Clone, Debug)]
+#[derive(clap::ValueEnum, Clone, Copy, Debug)]
 enum OutputType {
     Png,
     Jpg
 }
 
+impl OutputType {
+    fn to_image_format(self) -> ImageFormat {
+        match self {
+            OutputType::Png => ImageFormat::Png,
+            OutputType::Jpg => ImageFormat::Jpeg
+        }
+    }
+}
+
+impl fmt::Display for OutputType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match &self {
+            OutputType::Png => write!(f, "png"),
+            OutputType::Jpg => write!(f, "jpg")
+        }
+    }
+}
 
 #[derive(Parser, Debug)]
 #[command(version = "1", about = "Split GIF into frames", long_about = "Split a GIF file into frames and save them as images. Allows different file type ouputs")]
@@ -51,43 +67,29 @@ fn main() {
 }
 
 fn read_into_frames(path: &Path) -> Vec<Frame> {
-    let file = File::open(path).unwrap_or_else(|_|{
-        panic!("No file");
-    });
-
+    let file = File::open(path).expect("No file at input path");
     let buffer = BufReader::new(file);
-
-    let decoder = GifDecoder::new(buffer).unwrap_or_else(|_|{
-        panic!("Not a gif bro");
-    });
-
+    let decoder = GifDecoder::new(buffer).expect("Error decoding gif");
     let frames = decoder.into_frames();
-    
 
-    frames.collect_frames().expect("error decoding gif")
+    frames.collect_frames().expect("Error decoding gif")
 }
 
 fn save_frame(frame: Frame, frame_count: i32, output_type: OutputType) {
-
     let img_buffer = frame.into_buffer();
     let img_buffer = DynamicImage::ImageRgba8(img_buffer);
+    let path = format!("frame_{}.{}", frame_count, output_type);
+    let path = Path::new(&path);
+
+    let err_handle = {|err: image::ImageError| eprintln!("{}", err) };
 
     match output_type {
         OutputType::Jpg => {
-            let path = format!("frame_{}.jpg", frame_count);
-            let path = Path::new(&path);
             let img_buffer = img_buffer.into_rgb8();
-            img_buffer.save_with_format(path, ImageFormat::Png).unwrap_or_else(|err|{
-                eprintln!("{}", err)
-            });
+            img_buffer.save_with_format(path, output_type.to_image_format()).unwrap_or_else(err_handle);
         },
         OutputType::Png => {
-            let path = format!("frame_{}.png", frame_count);
-            let path = Path::new(&path);
-            img_buffer.save_with_format(path, ImageFormat::Png).unwrap_or_else(|err|{
-                eprintln!("{}", err)
-            });
+            img_buffer.save_with_format(path, output_type.to_image_format()).unwrap_or_else(err_handle);
         }
     }
-
 }
