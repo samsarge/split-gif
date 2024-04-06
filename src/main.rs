@@ -62,7 +62,7 @@ fn main() {
     let mut frames = read_into_frames(gif_path);
 
     if args.max_frames.is_some()  {
-        frames = reduce_frames(frames, args.max_frames.unwrap());
+        reduce_frames(&mut frames, args.max_frames.unwrap());
     }
 
     frames.par_iter().enumerate().for_each(|(index, frame)|{
@@ -70,21 +70,26 @@ fn main() {
     })
 }
 
-fn reduce_frames(frames: Vec<Frame>, max: usize) -> Vec<Frame> {
+fn reduce_frames(frames: &mut Vec<Frame>, max: usize) {
     let length = frames.len();
     let step = (length as f64 / max as f64).floor() as usize;
-    let mut new_frames: Vec<Frame> = Vec::with_capacity(max);
 
-    frames.iter().step_by(step).enumerate().for_each(|(i, frame)|{
-        // index of the new stepped iter
-        // step_by always includes the first item
-        // which we want, sometimes it might step over the max depending
-        if i < max {
-            new_frames.push(frame.clone());
+    let mut deletion_count = 0;
+    let mut delete_cursor = 1;
+
+    loop {
+        if deletion_count == step {
+            deletion_count = 0;
+            delete_cursor += 1;
         }
-    });
 
-    new_frames
+        frames.remove(delete_cursor);
+        deletion_count += 1;
+
+        if delete_cursor >= frames.len() {
+            break;
+        }
+    }
 }
 
 fn read_into_frames(path: &Path) -> Vec<Frame> {
