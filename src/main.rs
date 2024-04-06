@@ -72,24 +72,24 @@ fn main() {
 
 fn reduce_frames(frames: &mut Vec<Frame>, max: usize) {
     let length = frames.len();
-    let step = (length as f64 / max as f64).floor() as usize;
 
-    let mut deletion_count = 0;
-    let mut delete_cursor = 1;
+    if max >= length {
+        return;
+    }
 
-    loop {
-        if deletion_count == step {
-            deletion_count = 0;
-            delete_cursor += 1;
-        }
+    let difference = (length as f32 / max as f32).floor() as usize;
+    let mut kept = 1usize;
+    let mut deleted = 0usize;
 
-        frames.remove(delete_cursor);
-        deletion_count += 1;
+    while frames.len() > max {
+        frames.remove(kept);
+        deleted += 1;
 
-        if delete_cursor >= frames.len() {
-            break;
+        if deleted == difference {
+            kept += 1;
         }
     }
+
 }
 
 fn read_into_frames(path: &Path) -> Vec<Frame> {
